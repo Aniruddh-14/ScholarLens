@@ -388,7 +388,7 @@ st.markdown(
     """
     <div class="main-header">
         <h1>📝 ScholarLens</h1>
-        <p>AI-powered summarization · TF-IDF &amp; K-Means clustering</p>
+        <p>Extractive summarization · TF-IDF &amp; K-Means clustering</p>
     </div>
     """,
     unsafe_allow_html=True,
