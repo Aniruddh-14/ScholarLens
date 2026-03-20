@@ -22,27 +22,27 @@ is_dark = st.session_state.dark_mode
 
 # ── Theme colours ────────────────────────────────────────────────────
 if is_dark:
-    bg              = "#0f1117"
-    bg_secondary    = "#1a1d2e"
-    text_primary    = "#e6e9f0"
-    text_secondary  = "#9ca3af"
-    card_bg         = "rgba(30, 34, 56, 0.7)"
-    card_border     = "rgba(102, 126, 234, 0.25)"
-    card_value      = "#a5b4fc"
-    summary_bg      = "rgba(30, 34, 56, 0.6)"
-    summary_border  = "#667eea"
-    input_bg        = "#1a1d2e"
-    input_border    = "#2d3148"
-    input_text      = "#e6e9f0"
-    divider_color   = "rgba(255,255,255,0.06)"
-    sidebar_bg      = "#141726"
-    hover_glow      = "rgba(102, 126, 234, 0.15)"
-    bullet_bg       = "rgba(102,126,234,0.08)"
-    insight_bg      = "rgba(118,75,162,0.10)"
-    insight_border  = "rgba(118,75,162,0.35)"
-    pill_active_bg  = "linear-gradient(135deg,#667eea,#764ba2)"
-    pill_inactive   = "rgba(30,34,56,0.6)"
-    pill_inactive_b = "rgba(102,126,234,0.2)"
+    bg              = "#0c0e18"                          # deeper, true dark
+    bg_secondary    = "#13162a"
+    text_primary    = "#edf0fc"                          # brighter — better contrast
+    text_secondary  = "#8892b0"                          # cooler slate, easier to read
+    card_bg         = "rgba(18, 21, 44, 0.78)"           # deeper glass pane
+    card_border     = "rgba(130, 150, 255, 0.13)"        # softer, less saturated
+    card_value      = "#b8c8ff"                          # lighter indigo for contrast
+    summary_bg      = "rgba(18, 21, 44, 0.65)"
+    summary_border  = "#7a8ef5"                          # slightly lighter accent
+    input_bg        = "#10132a"
+    input_border    = "#222545"                          # muted, softer
+    input_text      = "#edf0fc"
+    divider_color   = "rgba(255,255,255,0.05)"
+    sidebar_bg      = "#0a0c1a"                          # darkest element
+    hover_glow      = "rgba(102, 126, 234, 0.22)"        # stronger glow
+    bullet_bg       = "rgba(102,126,234,0.07)"
+    insight_bg      = "rgba(118,75,162,0.09)"
+    insight_border  = "rgba(130,100,220,0.28)"           # softer insight border
+    pill_active_bg  = "linear-gradient(135deg,#5a74e8,#6e42a8)"  # slightly muted active
+    pill_inactive   = "rgba(18,21,44,0.65)"
+    pill_inactive_b = "rgba(110,130,240,0.18)"
 else:
     bg              = "#f8f9fc"
     bg_secondary    = "#ffffff"
@@ -94,12 +94,12 @@ st.markdown(
     /* ─── Animated header ─── */
     .main-header {{ text-align:center; padding:2rem 0 1rem; }}
     .main-header h1 {{
-        background: linear-gradient(135deg,#667eea,#764ba2,#f093fb,#667eea);
+        background: linear-gradient(135deg,#7a8ef5,#9b6ec9,#d17ff0,#7a8ef5);
         background-size: 300% 300%;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-size: 3rem; font-weight: 800; letter-spacing: -0.02em;
-        animation: gradientShift 6s ease infinite;
+        animation: gradientShift 8s ease infinite;  /* slower = softer feel */
     }}
     .main-header p {{
         color: {text_secondary}; font-size:1.1rem; font-weight:400;
@@ -300,13 +300,13 @@ st.markdown(
 
     /* ─── Buttons ─── */
     .stButton > button {{
-        transition: transform 0.2s cubic-bezier(0.4,0,0.2,1),
-                    box-shadow 0.2s ease, background 0.2s ease !important;
+        transition: transform 0.22s cubic-bezier(0.4,0,0.2,1),
+                    box-shadow 0.22s ease, background 0.2s ease !important;
         position: relative; overflow: hidden;
     }}
     .stButton > button::after {{
         content:''; position:absolute; inset:0; border-radius:inherit;
-        background: rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.10);
         opacity:0; transition: opacity 0.2s ease;
     }}
     .stButton > button:hover::after {{ opacity:1; }}
@@ -318,14 +318,22 @@ st.markdown(
     }}
     .stButton > button[kind="primary"]:hover {{
         transform: translateY(-3px) scale(1.02) !important;
-        box-shadow: 0 8px 30px rgba(102,126,234,0.45) !important;
+        /* multi-layer diffuse glow: tight core + soft outer bloom */
+        box-shadow:
+            0 0 0 1px rgba(102,126,234,0.25),
+            0 4px 14px rgba(102,126,234,0.40),
+            0 10px 40px rgba(118,75,162,0.25),
+            0 20px 60px rgba(102,126,234,0.12) !important;
     }}
     .stButton > button[kind="primary"]:active {{
-        transform: translateY(0) scale(0.98) !important;
+        transform: translateY(0) scale(0.97) !important;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.30) !important;
     }}
     .stButton > button:not([kind="primary"]):hover {{
         transform: translateY(-2px) !important;
-        box-shadow: 0 4px 16px {hover_glow} !important;
+        box-shadow:
+            0 4px 14px {hover_glow},
+            0 8px 28px rgba(102,126,234,0.08) !important;
     }}
 
     /* ─── Text area ─── */
