@@ -7,6 +7,26 @@ texts shown in the sidebar dropdown.
 
 from __future__ import annotations
 
+import io
+from PyPDF2 import PdfReader
+
+
+# ── File reading ───────────────────────────────────────────────────
+
+def extract_text_from_file(file_obj, filename: str) -> str:
+    """Extract and return text from an uploaded Streamlit file object."""
+    if filename.lower().endswith(".pdf"):
+        reader = PdfReader(file_obj)
+        text = []
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text.append(page_text)
+        return "\n".join(text)
+    else:
+        # assume text file
+        return file_obj.getvalue().decode("utf-8", errors="ignore")
+
 
 # ── Text metrics ───────────────────────────────────────────────────
 

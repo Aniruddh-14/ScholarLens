@@ -1,6 +1,7 @@
 import streamlit as st
 from src.summarizer import summarize
-from src.utils import SAMPLE_TEXTS, word_count, char_count
+from src.utils import SAMPLE_TEXTS, word_count, char_count, extract_text_from_file
+from src.visualization import generate_cluster_plot, get_top_keywords
 
 # ── Page config ──────────────────────────────────────────────────────
 st.set_page_config(
@@ -470,17 +471,28 @@ st.caption(f"_{MODE_META[active_mode]['desc']}_")
 st.divider()
 
 # ── Main input area ──────────────────────────────────────────────────
+st.markdown('<div class="section-title">📄 Document Input</div>', unsafe_allow_html=True)
+
+uploaded_file = st.file_uploader("Upload a document (.pdf or .txt) instead of pasting:", type=["pdf", "txt"])
+
 if sample_choice and sample_choice != "— Choose —":
     default_text = SAMPLE_TEXTS[sample_choice]
 else:
     default_text = ""
 
 input_text = st.text_area(
-    "Paste your text below:",
+    "Or paste your text below:",
     value=default_text,
-    height=250,
+    height=200,
     placeholder="Enter or paste a paragraph / article here…",
 )
+
+if uploaded_file is not None:
+    try:
+        input_text = extract_text_from_file(uploaded_file, uploaded_file.name)
+        st.success(f"Successfully loaded '{uploaded_file.name}'!")
+    except Exception as e:
+        st.error(f"Error reading file: {e}")
 
 # ── Summarize button ─────────────────────────────────────────────────
 col_btn, _ = st.columns([1, 4])
@@ -541,53 +553,58 @@ if run:
 
         st.markdown("---")
 
-        # ── Mode-specific output ──────────────────────────────────
-        st.markdown(
-            f'<div class="section-title">{MODE_META[active_mode]["label"]} &nbsp;Summary</div>',
-            unsafe_allow_html=True,
-        )
-
-        if active_mode == "bullet" and result["bullets"]:
-            items_html = "".join(
-                f'<li class="bullet-item" style="animation-delay:{i*0.06}s">'
-                f'<span class="bullet-dot"></span><span>{b}</span></li>'
-                for i, b in enumerate(result["bullets"])
-            )
+        # ── Tabs layout ───────────────────────────────────────────
+        tab_summary, tab_analytics, tab_original = st.tabs(["📝 Summary", "📊 Analytics", "📄 Original Document"])
+        
+        with tab_summary:
             st.markdown(
-                f'<ul class="bullet-list">{items_html}</ul>',
+                f'<div class="section-title">{MODE_META[active_mode]["label"]} &nbsp;Result</div>',
                 unsafe_allow_html=True,
             )
 
-        elif active_mode == "key_insights" and result["insights"]:
-            cards_html = "".join(
-                f'<div class="insight-card" style="animation-delay:{i*0.07}s">'
-                f'<div class="insight-topic">{ins["topic"]}</div>'
-                f'<div class="insight-text">{ins["insight"]}</div>'
-                f'</div>'
-                for i, ins in enumerate(result["insights"])
-            )
-            st.markdown(cards_html, unsafe_allow_html=True)
+            if active_mode == "bullet" and result["bullets"]:
+                items_html = "".join(
+                    f'<li class="bullet-item" style="animation-delay:{i*0.06}s">'
+                    f'<span class="bullet-dot"></span><span>{b}</span></li>'
+                    for i, b in enumerate(result["bullets"])
+                )
+                st.markdown(f'<ul class="bullet-list">{items_html}</ul>', unsafe_allow_html=True)
 
-        else:
-            # extractive or abstractive → flowing paragraph
-            st.markdown(
-                f'<div class="summary-box">{result["summary"]}</div>',
-                unsafe_allow_html=True,
-            )
+            elif active_mode == "key_insights" and result["insights"]:
+                cards_html = "".join(
+                    f'<div class="insight-card" style="animation-delay:{i*0.07}s">'
+                    f'<div class="insight-topic">{ins["topic"]}</div>'
+                    f'<div class="insight-text">{ins["insight"]}</div></div>'
+                    for i, ins in enumerate(result["insights"])
+                )
+                st.markdown(cards_html, unsafe_allow_html=True)
 
-        # ── Side-by-side comparison ───────────────────────────────
-        st.markdown("---")
-        st.markdown('<div class="section-title">🔍 Comparison</div>', unsafe_allow_html=True)
-        col_orig, col_summ = st.columns(2)
-        with col_orig:
-            st.markdown(f"**Original** — {word_count(input_text)} words, {char_count(input_text)} chars")
+            else:
+                st.markdown(f'<div class="summary-box">{result["summary"]}</div>', unsafe_allow_html=True)
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.download_button("📥 Download Summary", data=result["summary"], file_name="summary.txt", mime="text/plain")
+
+        with tab_analytics:
+            st.markdown('<div class="section-title">🔑 Top Keywords</div>', unsafe_allow_html=True)
+            keywords = get_top_keywords(result.get("sentences", []), n_keywords=10)
+            if keywords:
+                kw_html = " ".join([f'<span style="background:rgba(102,126,234,0.15); border:1px solid #667eea; border-radius:12px; padding:4px 10px; margin:4px; display:inline-block; font-size:0.85rem; font-weight:600; color:{text_primary};">{k.title()}</span>' for k in keywords])
+                st.markdown(kw_html, unsafe_allow_html=True)
+            else:
+                st.info("Not enough text to extract keywords.")
+                
+            st.markdown('<div class="section-title">🕸️ Clustering Visualization</div>', unsafe_allow_html=True)
+            if "sentences" in result and len(result["sentences"]) >= 3:
+                fig = generate_cluster_plot(result["sentences"], result["n_keep"])
+                if fig:
+                    st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Need at least 3 sentences to generate clustering plot.")
+
+        with tab_original:
+            st.markdown(f"**Original Text** — {word_count(input_text)} words, {char_count(input_text)} chars")
             st.info(input_text)
-        with col_summ:
-            st.markdown(
-                f'**Summary** — {word_count(result["summary"])} words, '
-                f'{char_count(result["summary"])} chars'
-            )
-            st.success(result["summary"])
 
     # Footer
     st.markdown(

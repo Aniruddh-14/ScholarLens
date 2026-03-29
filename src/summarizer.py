@@ -68,6 +68,8 @@ def summarize(text: str, ratio: float = 0.3, mode: str = "extractive") -> dict:
             "original_sentence_count": len(sentences),
             "summary_sentence_count": len(sentences),
             "compression_ratio": 1.0,
+            "sentences": sentences,
+            "n_keep": len(sentences),
         }
         return base
 
@@ -91,6 +93,8 @@ def summarize(text: str, ratio: float = 0.3, mode: str = "extractive") -> dict:
             "original_sentence_count": len(sentences),
             "summary_sentence_count": len(summary_sentences),
             "compression_ratio": round(len(summary_sentences) / len(sentences), 2),
+            "sentences": sentences,
+            "n_keep": n_keep,
         }
 
     if mode == "abstractive":
@@ -104,6 +108,8 @@ def summarize(text: str, ratio: float = 0.3, mode: str = "extractive") -> dict:
             "original_sentence_count": len(sentences),
             "summary_sentence_count": n_keep,
             "compression_ratio": round(n_keep / len(sentences), 2),
+            "sentences": sentences,
+            "n_keep": n_keep,
         }
 
     if mode == "bullet":
@@ -116,6 +122,8 @@ def summarize(text: str, ratio: float = 0.3, mode: str = "extractive") -> dict:
             "original_sentence_count": len(sentences),
             "summary_sentence_count": len(bullets),
             "compression_ratio": round(len(bullets) / len(sentences), 2),
+            "sentences": sentences,
+            "n_keep": n_keep,
         }
 
     if mode == "key_insights":
@@ -129,6 +137,8 @@ def summarize(text: str, ratio: float = 0.3, mode: str = "extractive") -> dict:
             "original_sentence_count": len(sentences),
             "summary_sentence_count": len(insights),
             "compression_ratio": round(len(insights) / len(sentences), 2),
+            "sentences": sentences,
+            "n_keep": n_keep,
         }
 
 
