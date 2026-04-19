@@ -110,7 +110,7 @@ def select_representative_sentences(
     sentences: list[str],
     labels: np.ndarray,
     sentence_scores: np.ndarray,
-) -> list[str]:
+) -> tuple[list[str], list[int]]:
     """
     From each cluster pick the sentence with the highest TF-IDF score,
     then return them in their original document order.
@@ -126,8 +126,9 @@ def select_representative_sentences(
 
     Returns
     -------
-    list[str]
-        Selected sentences, ordered by their position in the document.
+    tuple[list[str], list[int]]
+        - Selected sentences, ordered by their position in the document.
+        - Corresponding original indices of the selected sentences.
     """
     selected_indices: list[int] = []
 
@@ -144,4 +145,4 @@ def select_representative_sentences(
 
     # sort by position so the summary follows original order
     selected_indices.sort()
-    return [sentences[i] for i in selected_indices]
+    return [sentences[i] for i in selected_indices], selected_indices
