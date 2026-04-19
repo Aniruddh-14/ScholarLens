@@ -4,3 +4,10 @@ scikit-learn
 numpy
 PyPDF2
 plotly
+langgraph
+langchain-groq
+langchain-core
+duckduckgo-search
+beautifulsoup4
+requests
+pytest
