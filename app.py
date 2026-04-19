@@ -1,7 +1,11 @@
 import streamlit as st
-from src.summarizer import summarize
+from src.summarizer import summarize as _summarize
 from src.utils import SAMPLE_TEXTS, word_count, char_count, extract_text_from_file
 from src.visualization import generate_cluster_plot, get_top_keywords
+
+@st.cache_data(show_spinner=False)
+def summarize(text, ratio, mode, auto_k):
+    return _summarize(text, ratio=ratio, mode=mode, auto_k=auto_k)
 
 # ── Page config ──────────────────────────────────────────────────────
 st.set_page_config(
@@ -405,10 +409,16 @@ with st.sidebar:
     st.divider()
 
     st.header("⚙️ Settings")
+    auto_k = st.toggle(
+        "🎯 Auto-detect length",
+        value=False,
+        help="Use the elbow method to automatically find the optimal number of summary sentences.",
+    )
     summary_ratio = st.slider(
         "Summary ratio",
         min_value=0.1, max_value=0.8, value=0.3, step=0.05,
-        help="Fraction of original sentences to keep in the summary.",
+        help="Fraction of original sentences to keep. Ignored when Auto-detect is on.",
+        disabled=auto_k,
     )
 
     st.divider()
@@ -520,7 +530,7 @@ if run:
             unsafe_allow_html=True,
         )
 
-        result = summarize(input_text, ratio=summary_ratio, mode=active_mode)
+        result = summarize(input_text, summary_ratio, active_mode, auto_k)
         spinner_ph.empty()
 
         # ── Metrics row ───────────────────────────────────────────
@@ -604,7 +614,29 @@ if run:
 
         with tab_original:
             st.markdown(f"**Original Text** — {word_count(input_text)} words, {char_count(input_text)} chars")
-            st.info(input_text)
+            st.caption("✨ Highlighted sentences were selected for the summary.")
+            selected_set = set(result.get("selected_indices", []))
+            all_sents = result.get("sentences", [])
+            if all_sents:
+                parts = []
+                for i, sent in enumerate(all_sents):
+                    if i in selected_set:
+                        parts.append(
+                            f'<mark style="background:rgba(102,126,234,0.28);'
+                            f'border-radius:4px;padding:1px 3px;">'
+                            f'{sent}</mark>'
+                        )
+                    else:
+                        parts.append(sent)
+                highlighted_html = (
+                    f'<div style="font-size:0.97rem;line-height:1.85;'
+                    f'color:{text_primary};">'
+                    + " ".join(parts)
+                    + "</div>"
+                )
+                st.markdown(highlighted_html, unsafe_allow_html=True)
+            else:
+                st.info(input_text)
 
     # Footer
     st.markdown(
