@@ -82,7 +82,7 @@ def abstractive_summarize(
     sentences: list[str],
     scores: np.ndarray,
     ratio: float,
-) -> str:
+) -> tuple[str, list[int]]:
     """
     Lightweight sentence-fusion abstractive summarizer.
 
@@ -92,9 +92,16 @@ def abstractive_summarize(
     2. Lightly trim each sentence to remove trailing low-value clauses.
     3. Insert varied transition phrases between sentences so the result
        reads as a flowing paragraph rather than extracted fragments.
+
+    Returns
+    -------
+    tuple[str, list[int]]
+        - The fused summary string.
+        - Original indices of the sentences used.
     """
     n = max(1, int(len(sentences) * ratio))
     selected = _top_sentences(sentences, scores, n)
+    selected_indices = [i for i, _ in selected]
 
     rng = random.Random(42)  # deterministic transitions
     parts: list[str] = []
@@ -108,7 +115,7 @@ def abstractive_summarize(
             body = trimmed[0].lower() + trimmed[1:] if trimmed else trimmed
             parts.append(f"{bridge} {body}")
 
-    return " ".join(parts)
+    return " ".join(parts), selected_indices
 
 
 # ── bullet mode ────────────────────────────────────────────────────
@@ -117,20 +124,28 @@ def bullet_summarize(
     sentences: list[str],
     scores: np.ndarray,
     ratio: float,
-) -> list[str]:
+) -> tuple[list[str], list[int]]:
     """
     Return a list of bullet-point strings (without the bullet character).
     Each item is one key sentence, lightly cleaned.
+
+    Returns
+    -------
+    tuple[list[str], list[int]]
+        - Bullet strings.
+        - Original indices of the sentences used.
     """
     n = max(1, int(len(sentences) * ratio))
     selected = _top_sentences(sentences, scores, n)
     bullets = []
-    for _, sent in selected:
+    selected_indices = []
+    for orig_idx, sent in selected:
         clean = sent.strip()
         if clean and clean[-1] not in ".!?":
             clean += "."
         bullets.append(clean)
-    return bullets
+        selected_indices.append(orig_idx)
+    return bullets, selected_indices
 
 
 # ── key insights mode ──────────────────────────────────────────────
@@ -140,13 +155,15 @@ def key_insights_summarize(
     scores: np.ndarray,
     ratio: float,
     n_topics: int = 5,
-) -> list[dict]:
+) -> tuple[list[dict], list[int]]:
     """
     Group the most important sentences under labelled topic headings.
 
     Returns
     -------
-    list of dicts: [{"topic": str, "insight": str}, ...]
+    tuple[list[dict], list[int]]
+        - list of dicts: [{"topic": str, "insight": str}, ...]
+        - Original indices of the sentences used.
     """
     # Step 1 — pick the top-scored sentences to work with
     n = max(2, int(len(sentences) * min(ratio * 1.5, 1.0)))
@@ -198,4 +215,4 @@ def key_insights_summarize(
                 text += "."
             insights.append({"topic": "Key Point", "insight": text})
 
-    return insights
+    return insights, sorted(used_sentences)
